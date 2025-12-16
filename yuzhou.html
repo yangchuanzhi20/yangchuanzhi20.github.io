@@ -1,0 +1,926 @@
+<!-- -&#45;&#45; START OF FILE cst2_galaxy.html -&#45;&#45;-->
+
+<!--
+  - @Project: Cosmic Memories - Galaxy Edition
+  - @Author: wp/electronicminer (Modified for Galaxy Structure)
+  - @Date: 2025-12-07
+  - @Description: 3D Structure reimagined as a Spiral Galaxy. No more Trees.
+  - 如需使用或分发，请务必保留此作者声明。
+-->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cosmic Memories - Galaxy Edition</title>
+    <style>
+        /* 背景：深空宇宙 */
+        body {
+            margin: 0;
+            overflow: hidden;
+            /* Deep Space Gradient */
+            background: radial-gradient(circle at center, #1b0d38 0%, #090514 40%, #000000 100%);
+            background-color: #000;
+            font-family: 'Montserrat', sans-serif;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        #canvas-container { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; cursor: grab; }
+        #canvas-container:active { cursor: grabbing; }
+
+        /* UI Overlay */
+        #ui-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 10; pointer-events: none;
+            display: flex; flex-direction: column;
+            align-items: center;
+            padding-top: 40px;
+            box-sizing: border-box;
+            transition: opacity 0.5s ease;
+        }
+
+        .ui-hidden { opacity: 0 !important; pointer-events: none !important; }
+
+        /* Loading */
+        #loader {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000;
+            z-index: 100;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.8s ease-out;
+        }
+        .loader-text {
+            color: #bfaaff; font-size: 14px; letter-spacing: 6px; margin-top: 20px;
+            text-transform: uppercase; font-weight: 300;
+            text-shadow: 0 0 15px rgba(191, 170, 255, 0.6);
+        }
+        .spinner {
+            width: 50px; height: 50px; border: 2px solid rgba(191, 170, 255, 0.1);
+            border-top: 2px solid #bfaaff; border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Typography */
+        h1 {
+            color: #fff; font-size: 8vw;
+            max-size: 64px; margin: 0; font-weight: 200;
+            letter-spacing: 8px;
+            text-shadow: 0 0 40px rgba(147, 112, 219, 0.8);
+            background: linear-gradient(to right, #fff, #bfaaff, #fff);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            font-family: 'Cinzel', serif;
+            opacity: 0.9; transition: opacity 0.5s ease;
+            text-align: center; pointer-events: none;
+        }
+        @media (min-width: 768px) { h1 { font-size: 64px; } }
+
+        /* Controls */
+        .controls-wrapper {
+            position: absolute; top: 100px; right: 20px;
+            pointer-events: auto;
+            display: flex; flex-direction: column; align-items: flex-end;
+            gap: 12px; z-index: 20;
+            transition: opacity 0.5s ease;
+        }
+
+        .btn-group {
+            display: flex; flex-direction: column; gap: 12px; align-items: flex-end;
+        }
+
+        .control-btn {
+            background: rgba(20, 10, 40, 0.6);
+            border: 1px solid rgba(147, 112, 219, 0.3);
+            color: #e6e6fa; padding: 12px 24px;
+            cursor: pointer; text-transform: uppercase;
+            letter-spacing: 2px; font-size: 9px;
+            transition: all 0.4s;
+            display: flex; align-items: center; justify-content: center;
+            backdrop-filter: blur(8px); min-width: 140px;
+            border-radius: 4px;
+        }
+
+        .control-btn.active {
+            background: rgba(147, 112, 219, 0.6); color: #fff;
+            box-shadow: 0 0 20px rgba(147, 112, 219, 0.4);
+        }
+        .control-btn:hover {
+            background: #9370db; color: #fff;
+            box-shadow: 0 0 25px rgba(147, 112, 219, 0.6);
+        }
+
+        .hint-text {
+            color: rgba(191, 170, 255, 0.5); font-size: 9px;
+            letter-spacing: 1px; text-transform: uppercase;
+            text-align: right; margin-top: 5px; max-width: 200px;
+        }
+
+        input[type="file"] { display: none; }
+
+        /* Mode Buttons (Bottom) */
+        #mode-bar {
+            position: absolute; bottom: 40px; left: 50%;
+            transform: translateX(-50%);
+            display: flex; gap: 20px;
+            z-index: 20; pointer-events: auto;
+        }
+        .mode-btn {
+            width: 50px; height: 50px; border-radius: 50%;
+            background: rgba(10, 5, 20, 0.8);
+            border: 1px solid #9370db;
+            color: #9370db; font-size: 20px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.3s;
+            backdrop-filter: blur(4px);
+            box-shadow: 0 0 15px rgba(147, 112, 219, 0.2);
+        }
+        .mode-btn:active { transform: scale(0.9); background: #9370db; color: #fff; }
+
+        /* Webcam feedback */
+        #webcam-wrapper {
+            position: absolute; bottom: 120px; left: 20px;
+            width: 120px; height: 90px;
+            border: 1px solid rgba(147, 112, 219, 0.5);
+            box-shadow: 0 0 20px rgba(0,0,0,0.9);
+            border-radius: 4px; overflow: hidden;
+            opacity: 0; pointer-events: none;
+            z-index: 50; background: #000;
+            transition: opacity 0.5s ease;
+        }
+        #webcam { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+
+        #debug-info {
+            position: absolute; bottom: 10px; left: 0;
+            color: rgba(191, 170, 255, 0.4); font-size: 10px;
+            font-family: monospace; pointer-events: none; z-index: 51;
+            width: 100%; text-align: center; letter-spacing: 2px;
+        }
+
+        /* Message Box */
+        #msg-box {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(10, 5, 20, 0.95);
+            border: 1px solid #9370db;
+            padding: 20px; color: #e6e6fa;
+            z-index: 200; text-align: center;
+            display: none; border-radius: 4px; min-width: 200px;
+            box-shadow: 0 0 50px rgba(147, 112, 219, 0.3);
+        }
+    </style>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap');
+    </style>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
+                "@mediapipe/tasks-vision": "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/+esm"
+            }
+        }
+    </script>
+</head>
+<body>
+
+    <div id="loader">
+        <div class="spinner"></div>
+        <div class="loader-text">Forming Galaxy</div>
+    </div>
+
+    <div id="msg-box"></div>
+
+    <div id="canvas-container"></div>
+
+    <div id="ui-layer">
+        <h1>Cosmic Spiral</h1>
+
+        <div class="controls-wrapper">
+            <div class="btn-group">
+                <div class="control-btn" id="cam-btn">📷 Enable Gesture</div>
+                <label class="control-btn">
+                    Select Folder
+                    <input type="file" id="folder-input" webkitdirectory directory multiple>
+                </label>
+                <label class="control-btn">
+                    Add Photos
+                    <input type="file" id="file-input" multiple accept="image/*">
+                </label>
+            </div>
+            <div class="hint-text">Stardust Loaded.</div>
+        </div>
+
+        <!-- 模式切换按钮 -->
+        <div id="mode-bar">
+            <div class="mode-btn" onclick="setMode('GALAXY')" title="Galaxy Shape">🌀</div>
+            <div class="mode-btn" onclick="setMode('SCATTER')" title="Big Bang">✨</div>
+            <div class="mode-btn" onclick="setMode('FOCUS_RANDOM')" title="View Memory">🔭</div>
+        </div>
+    </div>
+
+    <div id="webcam-wrapper">
+        <video id="webcam" autoplay playsinline webkit-playsinline></video>
+    </div>
+    <div id="debug-info">Drag to rotate • Tap star to view</div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+        import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+        import { FilesetResolver, HandLandmarker } from '@mediapipe/tasks-vision';
+
+        // --- 核心配置 (Theme: Cosmic Galaxy) ---
+        const CONFIG = {
+            colors: {
+                bg: 0x000000,
+                fog: 0x100520,
+                starBlue: 0x88ccff,
+                starPurple: 0xaa44ff,
+                starGold: 0xffdd88,
+                core: 0xffffff
+            },
+            particles: {
+                count: 2000,
+                dustCount: 3000,
+                cometCount: 200, // Replaces snow
+                galaxyRadius: 28, // Wider spread
+                armCount: 3
+            },
+            camera: { z: 40, y: 25 }, // Higher camera angle to see the spiral
+            preload: {
+                autoScanLocal: false,
+                useCloudImages: true,
+                cloudImageUrls: [
+                    "https://yangchuanzhi20.github.io/img/t1.jpg",
+                    "https://yangchuanzhi20.github.io/img/t2.jpg",
+                    "https://yangchuanzhi20.github.io/img/t4.jpg",
+                    "https://yangchuanzhi20.github.io/img/t5.jpg",
+                    "https://yangchuanzhi20.github.io/img/t7.jpg",
+                    "https://yangchuanzhi20.github.io/img/t8.jpg",
+                    "https://yangchuanzhi20.github.io/img/t10.jpg",
+                    "https://yangchuanzhi20.github.io/img/t11.jpg",
+                    "https://yangchuanzhi20.github.io/img/t13.jpg",
+                    "https://yangchuanzhi20.github.io/img/t14.jpg",
+                    "https://yangchuanzhi20.github.io/img/t15.jpg",
+                    "https://yangchuanzhi20.github.io/img/t17.jpg",
+                    "https://yangchuanzhi20.github.io/img/t18.jpg",
+                    "https://yangchuanzhi20.github.io/img/t19.jpg",
+                    "https://yangchuanzhi20.github.io/img/t20.jpg",
+                    "https://yangchuanzhi20.github.io/img/t22.jpg",
+                    "https://yangchuanzhi20.github.io/img/t23.jpg",
+                    "https://yangchuanzhi20.github.io/img/t24.jpg",
+                    "https://yangchuanzhi20.github.io/img/t26.jpg",
+                    "https://yangchuanzhi20.github.io/img/t28.jpg",
+                    "https://yangchuanzhi20.github.io/img/t30.jpg",
+                    "https://yangchuanzhi20.github.io/img/t32.jpg",
+                    "https://yangchuanzhi20.github.io/img/t33.jpg",
+                    "https://yangchuanzhi20.github.io/img/t35.jpg",
+                    "https://yangchuanzhi20.github.io/img/t36.jpg",
+                    "https://yangchuanzhi20.github.io/img/t38.jpg",
+                    "https://yangchuanzhi20.github.io/img/t39.jpg",
+                    "https://yangchuanzhi20.github.io/img/t40.jpg",
+                    "https://yangchuanzhi20.github.io/img/t42.jpg",
+                    "https://yangchuanzhi20.github.io/img/t43.jpg",
+                    "https://yangchuanzhi20.github.io/img/t45.jpg",
+                    "https://yangchuanzhi20.github.io/img/t46.jpg",
+                    "https://yangchuanzhi20.github.io/img/t48.jpg",
+                    "https://yangchuanzhi20.github.io/img/t49.jpg",
+                    "https://yangchuanzhi20.github.io/img/t51.jpg",
+                    "https://yangchuanzhi20.github.io/img/t52.jpg",
+                    "https://yangchuanzhi20.github.io/img/t54.jpg",
+                    "https://yangchuanzhi20.github.io/img/t56.jpg",
+                    "https://yangchuanzhi20.github.io/img/t57.jpg",
+                    "https://yangchuanzhi20.github.io/img/t59.jpg"
+                ],
+                scanCount: 200,
+            }
+        };
+
+        const STATE = {
+            mode: 'GALAXY', // Renamed from TREE
+            focusIndex: -1,
+            focusTarget: null,
+            hand: { detected: false, x: 0, y: 0 },
+            rotation: { x: 0, y: 0 }, // Initial angle
+            touch: { active: false, startX: 0, startY: 0, lastX: 0, lastY: 0 }
+        };
+
+        let scene, camera, renderer, composer;
+        let mainGroup;
+        let clock = new THREE.Clock();
+        let particleSystem = [];
+        let photoMeshGroup = new THREE.Group();
+        let handLandmarker, video;
+        let cometSystem;
+        let raycaster = new THREE.Raycaster();
+        let mouse = new THREE.Vector2();
+
+        const debugInfo = document.getElementById('debug-info');
+        const camBtn = document.getElementById('cam-btn');
+        let isCameraRunning = false;
+
+        window.setMode = (mode) => {
+            if (mode === 'FOCUS_RANDOM') {
+                STATE.mode = 'FOCUS';
+                const photos = particleSystem.filter(p => p.type === 'PHOTO');
+                if (photos.length) STATE.focusTarget = photos[Math.floor(Math.random()*photos.length)].mesh;
+            } else {
+                STATE.mode = mode;
+                if (mode === 'GALAXY') STATE.focusTarget = null;
+            }
+        };
+
+        async function init() {
+            initThree();
+            setupEnvironment();
+            setupLights();
+            createParticles();
+            createNebulaDust();
+            createComets();
+            loadPredefinedImages();
+            setupPostProcessing();
+            setupEvents();
+            setupTouchAndClick();
+
+            const loader = document.getElementById('loader');
+            loader.style.opacity = 0;
+            setTimeout(() => loader.remove(), 800);
+
+            animate();
+        }
+
+        // --- Raycaster & Interactions ---
+        function setupTouchAndClick() {
+            const container = document.getElementById('canvas-container');
+
+            container.addEventListener('pointerdown', (e) => {
+                STATE.touch.active = true;
+                STATE.touch.startX = e.clientX;
+                STATE.touch.startY = e.clientY;
+                STATE.touch.lastX = e.clientX;
+                STATE.touch.lastY = e.clientY;
+            });
+
+            window.addEventListener('pointermove', (e) => {
+                if (!STATE.touch.active) return;
+                const deltaX = e.clientX - STATE.touch.lastX;
+                const deltaY = e.clientY - STATE.touch.lastY;
+                STATE.rotation.y += deltaX * 0.005;
+                STATE.rotation.x += deltaY * 0.002;
+                // Allow more freedom in rotation for Galaxy view
+                STATE.rotation.x = Math.max(-1.0, Math.min(1.0, STATE.rotation.x));
+                STATE.touch.lastX = e.clientX;
+                STATE.touch.lastY = e.clientY;
+            });
+
+            window.addEventListener('pointerup', (e) => {
+                STATE.touch.active = false;
+            });
+
+            container.addEventListener('click', (e) => {
+                const moveDist = Math.hypot(e.clientX - STATE.touch.startX, e.clientY - STATE.touch.startY);
+                if (moveDist > 10) return;
+
+                mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+                raycaster.setFromCamera(mouse, camera);
+
+                const intersects = raycaster.intersectObjects(mainGroup.children, true);
+
+                let clickedPhoto = null;
+                for (let hit of intersects) {
+                    let obj = hit.object;
+                    while(obj.parent && obj.parent !== mainGroup && obj.parent !== photoMeshGroup) {
+                        obj = obj.parent;
+                    }
+                    const particle = particleSystem.find(p => p.mesh === obj && p.type === 'PHOTO');
+                    if (particle) {
+                        clickedPhoto = particle;
+                        break;
+                    }
+                }
+
+                if (clickedPhoto) {
+                    STATE.mode = 'FOCUS';
+                    STATE.focusTarget = clickedPhoto.mesh;
+                } else {
+                    if (STATE.mode === 'FOCUS') {
+                        STATE.mode = 'GALAXY';
+                        STATE.focusTarget = null;
+                    }
+                }
+            });
+
+            let lastTap = 0;
+            container.addEventListener('touchend', (e) => {
+                const currentTime = new Date().getTime();
+                const tapLength = currentTime - lastTap;
+                if (tapLength < 300 && tapLength > 0) {
+                    STATE.mode = (STATE.mode === 'SCATTER') ? 'GALAXY' : 'SCATTER';
+                    e.preventDefault();
+                }
+                lastTap = currentTime;
+            });
+        }
+
+        // --- Core Three.js ---
+        function initThree() {
+            const container = document.getElementById('canvas-container');
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(CONFIG.colors.bg);
+            scene.fog = new THREE.FogExp2(CONFIG.colors.fog, 0.012);
+
+            camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+            // Default look from slightly above
+            camera.position.set(0, CONFIG.camera.y, CONFIG.camera.z);
+            camera.lookAt(0,0,0);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.2;
+            container.appendChild(renderer.domElement);
+
+            mainGroup = new THREE.Group();
+            scene.add(mainGroup);
+        }
+
+        function setupEnvironment() {
+            const pmremGenerator = new THREE.PMREMGenerator(renderer);
+            scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
+        }
+
+        function setupLights() {
+            const ambient = new THREE.AmbientLight(0x404060, 1.0);
+            scene.add(ambient);
+
+            // The Galactic Core
+            const coreLight = new THREE.PointLight(0xaaddff, 3, 50);
+            coreLight.position.set(0, 0, 0);
+            mainGroup.add(coreLight);
+
+            const purpleLight = new THREE.SpotLight(0xaa00ff, 1200);
+            purpleLight.position.set(40, 20, 40);
+            scene.add(purpleLight);
+
+            const blueLight = new THREE.SpotLight(0x0044ff, 1200);
+            blueLight.position.set(-40, -20, -40);
+            scene.add(blueLight);
+        }
+
+        function setupPostProcessing() {
+            const renderScene = new RenderPass(scene, camera);
+            // Intense bloom for glowing stars
+            const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
+            bloomPass.threshold = 0.2; bloomPass.strength = 1.2; bloomPass.radius = 0.5;
+            composer = new EffectComposer(renderer);
+            composer.addPass(renderScene);
+            composer.addPass(bloomPass);
+        }
+
+        // --- Particle & Image System ---
+        function createComets() {
+            const geometry = new THREE.BufferGeometry();
+            const vertices = []; const velocities = [];
+
+            for (let i = 0; i < CONFIG.particles.cometCount; i++) {
+                // Spawn in a sphere
+                vertices.push(THREE.MathUtils.randFloatSpread(100), THREE.MathUtils.randFloatSpread(100), THREE.MathUtils.randFloatSpread(100));
+                velocities.push(Math.random() * 0.2 + 0.1);
+            }
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+            geometry.setAttribute('userData', new THREE.Float32BufferAttribute(velocities, 1));
+
+            // Use a simple dot texture
+            const canvas = document.createElement('canvas');
+            canvas.width = 16; canvas.height = 16;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(8,8,8,0,Math.PI*2); ctx.fill();
+            const tex = new THREE.CanvasTexture(canvas);
+
+            const material = new THREE.PointsMaterial({
+                color: 0x88ccff, size: 0.6, map: tex,
+                transparent: true, opacity: 0.8,
+                blending: THREE.AdditiveBlending, depthWrite: false
+            });
+            cometSystem = new THREE.Points(geometry, material);
+            scene.add(cometSystem);
+        }
+
+        function updateComets() {
+            if (!cometSystem) return;
+            const positions = cometSystem.geometry.attributes.position.array;
+            const velocities = cometSystem.geometry.attributes.userData.array;
+
+            for (let i = 0; i < CONFIG.particles.cometCount; i++) {
+                const speed = velocities[i];
+                // Move towards center then pass through? Or just drift Z?
+                // Let's make them drift across screen
+                positions[i * 3 + 2] += speed; // Z movement
+
+                if (positions[i * 3 + 2] > 50) {
+                    positions[i * 3 + 2] = -50;
+                    positions[i * 3] = THREE.MathUtils.randFloatSpread(100);
+                    positions[i * 3 + 1] = THREE.MathUtils.randFloatSpread(60);
+                }
+            }
+            cometSystem.geometry.attributes.position.needsUpdate = true;
+        }
+
+        class Particle {
+            constructor(mesh, type, isDust = false) {
+                this.mesh = mesh; this.type = type; this.isDust = isDust;
+                this.posGalaxy = new THREE.Vector3(); // Replaced posTree
+                this.posScatter = new THREE.Vector3();
+                this.baseScale = mesh.scale.x;
+                this.spinSpeed = new THREE.Vector3(Math.random()*0.5, Math.random()*0.5, Math.random()*0.5);
+                this.calculatePositions();
+            }
+
+            calculatePositions() {
+                // 1. SCATTER POSITION (Big Bang sphere)
+                const rScatter = 15 + Math.random()*30;
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.acos(2 * Math.random() - 1);
+                this.posScatter.set(rScatter * Math.sin(phi) * Math.cos(theta), rScatter * Math.sin(phi) * Math.sin(theta), rScatter * Math.cos(phi));
+
+                // 2. GALAXY POSITION (Spiral Arms)
+                // Using Logarithmic Spiral formula approximation
+                // arms = 3
+                const arms = 3;
+                // Random distance from center (bias towards center for density)
+                const r = Math.pow(Math.random(), 1.5) * CONFIG.particles.galaxyRadius;
+
+                // Angle based on radius + arm offset
+                const armIndex = Math.floor(Math.random() * arms);
+                const armOffset = (Math.PI * 2 / arms) * armIndex;
+                const spinFactor = 0.5; // How tight the spiral is
+                const angle = armOffset + (r * spinFactor);
+
+                // Add some randomness to angle (spread width of arm)
+                const spread = Math.random() * 0.5;
+                const finalAngle = angle + spread;
+
+                // Vertical spread (thicker at center, thinner at edges like a lens)
+                const diskThickness = 4 * Math.exp(-r / 15);
+                const y = (Math.random() - 0.5) * diskThickness;
+
+                const x = Math.cos(finalAngle) * r;
+                const z = Math.sin(finalAngle) * r;
+
+                this.posGalaxy.set(x, y, z);
+            }
+
+            update(dt, mode, focusTargetMesh) {
+                let target = (mode === 'SCATTER') ? this.posScatter : this.posGalaxy;
+
+                if (mode === 'FOCUS') {
+                    if (this.mesh === focusTargetMesh) {
+                        // Bring closer to camera
+                        const desiredWorldPos = new THREE.Vector3(0, 2, 35);
+                        // Convert world pos to local inside the rotating group
+                        const invMatrix = new THREE.Matrix4().copy(mainGroup.matrixWorld).invert();
+                        target = desiredWorldPos.applyMatrix4(invMatrix);
+                    } else {
+                        target = this.posScatter; // Others scatter away
+                    }
+                }
+
+                const lerpSpeed = (mode === 'FOCUS' && this.mesh === focusTargetMesh) ? 4.0 : 1.0;
+                this.mesh.position.lerp(target, lerpSpeed * dt);
+
+                // Rotation behavior
+                if (mode === 'GALAXY') {
+                     // Stars face camera mostly, but tumbling is fine for dust
+                     if(this.type === 'PHOTO') {
+                         this.mesh.lookAt(camera.position);
+                     } else {
+                         this.mesh.rotation.x += this.spinSpeed.x * dt;
+                         this.mesh.rotation.y += this.spinSpeed.y * dt;
+                     }
+                }
+
+                if (mode === 'FOCUS' && this.mesh === focusTargetMesh) this.mesh.lookAt(camera.position);
+
+                // Scaling
+                let s = this.baseScale;
+                if (mode === 'GALAXY') {
+                    // Pulsate stars
+                    if (!this.type.includes('PHOTO')) {
+                         s = this.baseScale * (0.8 + 0.4 * Math.sin(clock.elapsedTime * 3 + this.mesh.id));
+                    }
+                }
+
+                if (mode === 'SCATTER' && this.type === 'PHOTO') s = this.baseScale * 2.5;
+                else if (mode === 'FOCUS') {
+                    if (this.mesh === focusTargetMesh) s = 4.5; else s = 0.1;
+                }
+                this.mesh.scale.lerp(new THREE.Vector3(s,s,s), 4*dt);
+            }
+        }
+
+        function updatePhotoLayout() {
+            const photos = particleSystem.filter(p => p.type === 'PHOTO');
+            const count = photos.length;
+            if (count === 0) return;
+
+            // Arrange photos in a ring/spiral embedded in the galaxy
+            const arms = 3;
+            photos.forEach((p, i) => {
+                // Distribute along the arms
+                const armIndex = i % arms;
+                // Position further out for photos
+                const progress = (i / count); // 0 to 1
+                const r = 8 + progress * 15; // Spiral outwards from 8 to 23
+
+                const armOffset = (Math.PI * 2 / arms) * armIndex;
+                const angle = armOffset + (r * 0.5); // Match the spiral tightness
+
+                const x = Math.cos(angle) * r;
+                const z = Math.sin(angle) * r;
+                const y = (Math.random() - 0.5) * 2; // Slight vertical variation
+
+                p.posGalaxy.set(x, y, z);
+            });
+        }
+
+        function createParticles() {
+            // Geometries
+            const sphereGeo = new THREE.SphereGeometry(0.2, 16, 16); // Small star
+            const bigStarGeo = new THREE.OctahedronGeometry(0.4, 0); // Diamond star
+            const rockGeo = new THREE.DodecahedronGeometry(0.25, 0); // Asteroid
+
+            // Materials
+            const blueStarMat = new THREE.MeshBasicMaterial({ color: CONFIG.colors.starBlue });
+            const purpleStarMat = new THREE.MeshBasicMaterial({ color: CONFIG.colors.starPurple });
+            const goldStarMat = new THREE.MeshStandardMaterial({
+                color: CONFIG.colors.starGold, emissive: 0xffaa00, emissiveIntensity: 2.0
+            });
+            const rockMat = new THREE.MeshStandardMaterial({
+                color: 0x666666, roughness: 0.8
+            });
+
+            for (let i = 0; i < CONFIG.particles.count; i++) {
+                const rand = Math.random();
+                let mesh, type;
+                if (rand < 0.40) {
+                    mesh = new THREE.Mesh(sphereGeo, blueStarMat); type = 'STAR_BLUE';
+                } else if (rand < 0.70) {
+                    mesh = new THREE.Mesh(sphereGeo, purpleStarMat); type = 'STAR_PURPLE';
+                } else if (rand < 0.85) {
+                    mesh = new THREE.Mesh(bigStarGeo, goldStarMat); type = 'STAR_GOLD';
+                } else {
+                    mesh = new THREE.Mesh(rockGeo, rockMat); type = 'ASTEROID';
+                }
+
+                const s = 0.5 + Math.random() * 1.0;
+                mesh.scale.set(s,s,s);
+                mesh.rotation.set(Math.random()*6, Math.random()*6, Math.random()*6);
+                mainGroup.add(mesh);
+                particleSystem.push(new Particle(mesh, type, false));
+            }
+
+            // Central Black Hole / Bright Core
+            const coreGeo = new THREE.SphereGeometry(2, 32, 32);
+            const coreMat = new THREE.MeshBasicMaterial({ color: 0xffffff }); // Bright white core
+            const coreMesh = new THREE.Mesh(coreGeo, coreMat);
+
+            // Add a "Halo"
+            const haloGeo = new THREE.RingGeometry(2.2, 2.5, 32);
+            const haloMat = new THREE.MeshBasicMaterial({ color: 0xaa44ff, side: THREE.DoubleSide, transparent: true, opacity: 0.8 });
+            const haloMesh = new THREE.Mesh(haloGeo, haloMat);
+            haloMesh.rotation.x = Math.PI / 2;
+
+            coreMesh.add(haloMesh);
+            mainGroup.add(coreMesh);
+
+            mainGroup.add(photoMeshGroup);
+        }
+
+        function createNebulaDust() {
+            // Floating nebula clouds (transparent planes)
+            const geo = new THREE.PlaneGeometry(0.5, 0.5);
+            const mat = new THREE.MeshBasicMaterial({ color: 0xaa88ff, side: THREE.DoubleSide, transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending });
+            for(let i=0; i<CONFIG.particles.dustCount; i++) {
+                 const mesh = new THREE.Mesh(geo, mat);
+                 mesh.rotation.set(Math.random()*3, Math.random()*3, Math.random()*3);
+                 mainGroup.add(mesh);
+                 particleSystem.push(new Particle(mesh, 'DUST', true));
+            }
+        }
+
+        function addPhotoToScene(texture) {
+            // Hi-tech / Holographic frame
+            const frameGeo = new THREE.BoxGeometry(1.4, 1.4, 0.05);
+            const frameMat = new THREE.MeshStandardMaterial({
+                color: 0x88ccff, metalness: 0.9, roughness: 0.1, emissive: 0x002244, emissiveIntensity: 0.5
+            });
+            const frame = new THREE.Mesh(frameGeo, frameMat);
+            let width = 1.2; let height = 1.2;
+            if (texture.image) {
+                const aspect = texture.image.width / texture.image.height;
+                if (aspect > 1) height = width / aspect; else width = height * aspect;
+            }
+            const photoGeo = new THREE.PlaneGeometry(width, height);
+            const photoMat = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide });
+            const photo = new THREE.Mesh(photoGeo, photoMat);
+            photo.position.z = 0.04;
+            const group = new THREE.Group();
+            group.add(frame); group.add(photo);
+            frame.scale.set(width/1.2, height/1.2, 1);
+
+            // Initial random scatter
+            group.position.set((Math.random()-0.5)*50, (Math.random()-0.5)*50, (Math.random()-0.5)*50);
+
+            const s = 0.8; group.scale.set(s,s,s);
+            photoMeshGroup.add(group);
+            particleSystem.push(new Particle(group, 'PHOTO', false));
+            updatePhotoLayout();
+        }
+
+        function handleImageUpload(e) {
+            const files = e.target.files;
+            if(!files.length) return;
+            Array.from(files).forEach(f => {
+                if (!f.type.startsWith('image/')) return;
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    new THREE.TextureLoader().load(ev.target.result, (t) => {
+                        t.colorSpace = THREE.SRGBColorSpace;
+                        addPhotoToScene(t);
+                    });
+                }
+                reader.readAsDataURL(f);
+            });
+        }
+
+        function loadPredefinedImages() {
+            const loader = new THREE.TextureLoader();
+
+            if (CONFIG.preload.useCloudImages && CONFIG.preload.cloudImageUrls.length > 0) {
+                CONFIG.preload.cloudImageUrls.forEach(url => {
+                    loader.load(
+                        url,
+                        (t) => {
+                            t.colorSpace = THREE.SRGBColorSpace;
+                            addPhotoToScene(t);
+                        },
+                        undefined,
+                        (err) => { console.warn("Failed to load cloud image:", url); }
+                    );
+                });
+            }
+
+            if (CONFIG.preload.autoScanLocal) {
+                for (let i = 1; i <= CONFIG.preload.scanCount; i++) {
+                    const pathJpg = `./images/(${i}).jpg`;
+                    const pathPng = `./images/(${i}).png`;
+                    loader.load(pathJpg, (t) => { t.colorSpace = THREE.SRGBColorSpace; addPhotoToScene(t); }, undefined, () => {
+                             loader.load(pathPng, (t) => { t.colorSpace = THREE.SRGBColorSpace; addPhotoToScene(t); }, undefined, () => {} );
+                    });
+                }
+            }
+        }
+
+        // --- MEDIAPIPE ---
+        function showMsg(txt) {
+            const box = document.getElementById('msg-box');
+            box.innerText = txt; box.style.display = 'block';
+            setTimeout(() => { box.style.display = 'none'; }, 3000);
+        }
+
+        async function initMediaPipe() {
+            if (isCameraRunning) return;
+            camBtn.innerText = "Initializing...";
+            debugInfo.innerText = "Loading AI models...";
+            video = document.getElementById('webcam');
+            try {
+                const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm");
+                handLandmarker = await HandLandmarker.createFromOptions(vision, {
+                    baseOptions: { modelAssetPath: `https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task`, delegate: "GPU" },
+                    runningMode: "VIDEO", numHands: 1
+                });
+                const constraints = { video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } } };
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = stream;
+                video.addEventListener("loadeddata", predictWebcam);
+                document.getElementById('webcam-wrapper').style.opacity = 1;
+                debugInfo.innerText = "Gesture Active: Show Hand";
+                camBtn.innerText = "Gesture Active";
+                camBtn.classList.add('active');
+                isCameraRunning = true;
+            } catch(e) {
+                console.warn("Camera error:", e);
+                let msg = "Camera Error: " + e.name;
+                if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') msg = "Please allow camera access!";
+                else if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') msg = "HTTPS required for camera!";
+                debugInfo.innerText = msg; showMsg(msg);
+                camBtn.innerText = "Retry Camera";
+            }
+        }
+
+        let lastVideoTime = -1;
+        async function predictWebcam() {
+            if (video.currentTime !== lastVideoTime) {
+                lastVideoTime = video.currentTime;
+                if (handLandmarker) {
+                    const result = handLandmarker.detectForVideo(video, performance.now());
+                    processGestures(result);
+                }
+            }
+            requestAnimationFrame(predictWebcam);
+        }
+
+        function processGestures(result) {
+            if (result.landmarks && result.landmarks.length > 0) {
+                STATE.hand.detected = true;
+                const lm = result.landmarks[0];
+                STATE.hand.x = (lm[9].x - 0.5) * 2;
+                STATE.hand.y = (lm[9].y - 0.5) * 2;
+                const wrist = lm[0]; const middleMCP = lm[9];
+                const handSize = Math.hypot(middleMCP.x - wrist.x, middleMCP.y - wrist.y);
+                if (handSize < 0.02) return;
+                const tips = [lm[8], lm[12], lm[16], lm[20]];
+                let avgTipDist = 0; tips.forEach(t => avgTipDist += Math.hypot(t.x - wrist.x, t.y - wrist.y)); avgTipDist /= 4;
+                const pinchDist = Math.hypot(lm[4].x - lm[8].x, lm[4].y - lm[8].y);
+                const extensionRatio = avgTipDist / handSize; const pinchRatio = pinchDist / handSize;
+
+                debugInfo.innerText = `Gesture Detected: ${STATE.mode}`;
+
+                if (extensionRatio < 1.5) { STATE.mode = 'GALAXY'; STATE.focusTarget = null; }
+                else if (pinchRatio < 0.35) {
+                    if (STATE.mode !== 'FOCUS') {
+                        STATE.mode = 'FOCUS';
+                        const photos = particleSystem.filter(p => p.type === 'PHOTO');
+                        if (photos.length) STATE.focusTarget = photos[Math.floor(Math.random()*photos.length)].mesh;
+                    }
+                } else if (extensionRatio > 1.7) { STATE.mode = 'SCATTER'; STATE.focusTarget = null; }
+            } else {
+                STATE.hand.detected = false;
+            }
+        }
+
+        function setupEvents() {
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                composer.setSize(window.innerWidth, window.innerHeight);
+            });
+            document.getElementById('file-input').addEventListener('change', handleImageUpload);
+            document.getElementById('folder-input').addEventListener('change', handleImageUpload);
+            camBtn.addEventListener('click', () => { initMediaPipe(); });
+            window.addEventListener('keydown', (e) => {
+                if (e.key.toLowerCase() === 'h') {
+                    const controls = document.querySelector('.controls-wrapper');
+                    if (controls) controls.classList.toggle('ui-hidden');
+                    const webcam = document.getElementById('webcam-wrapper');
+                    if(webcam) webcam.classList.toggle('ui-hidden');
+                }
+            });
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const dt = clock.getDelta();
+
+            if (STATE.hand.detected) {
+                if (STATE.mode === 'SCATTER') {
+                    const targetRotY = STATE.hand.x * Math.PI * 0.9;
+                    const targetRotX = STATE.hand.y * Math.PI * 0.25;
+                    STATE.rotation.y += (targetRotY - STATE.rotation.y) * 3.0 * dt;
+                    STATE.rotation.x += (targetRotX - STATE.rotation.x) * 3.0 * dt;
+                } else {
+                    STATE.rotation.y += 0.3 * dt;
+                }
+            } else if (STATE.touch.active) {
+                // Handled in listeners
+            } else {
+                if(STATE.mode === 'GALAXY') {
+                    // Constant slow rotation of the galaxy
+                    STATE.rotation.y -= 0.1 * dt;
+                    // Slowly oscillate the tilt
+                    STATE.rotation.x = Math.sin(clock.elapsedTime * 0.2) * 0.2 + 0.3; // Slight tilt
+                } else {
+                    STATE.rotation.y += 0.1 * dt;
+                }
+            }
+
+            mainGroup.rotation.y = STATE.rotation.y;
+            mainGroup.rotation.x = STATE.rotation.x;
+
+            particleSystem.forEach(p => p.update(dt, STATE.mode, STATE.focusTarget));
+            updateComets();
+            composer.render();
+        }
+
+        init();
+    </script>
+</body>
+</html>
