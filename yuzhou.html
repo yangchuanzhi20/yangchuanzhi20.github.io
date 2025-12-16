@@ -671,10 +671,18 @@
         }
 
         function addPhotoToScene(texture) {
+            // --- 修改开始：改为简约的深灰色金属边框，去掉发光蓝光 ---
             const frameGeo = new THREE.BoxGeometry(1.4, 1.4, 0.05);
+
             const frameMat = new THREE.MeshStandardMaterial({
-                color: 0x88ccff, metalness: 0.9, roughness: 0.1, emissive: 0x002244, emissiveIntensity: 0.5
+                color: 0x333333,      // 改为深灰色 (或者 0xffffff 改为白色)
+                metalness: 0.8,       // 金属质感
+                roughness: 0.4,       // 稍微粗糙一点，减少反光
+                emissive: 0x000000,   // 【关键】设为黑色，表示不自发光
+                emissiveIntensity: 0  // 【关键】发光强度设为0
             });
+            // --- 修改结束 ---
+
             const frame = new THREE.Mesh(frameGeo, frameMat);
             let width = 1.2; let height = 1.2;
             if (texture.image) {
@@ -688,6 +696,8 @@
             const group = new THREE.Group();
             group.add(frame); group.add(photo);
             frame.scale.set(width/1.2, height/1.2, 1);
+
+            // 初始随机位置
             group.position.set((Math.random()-0.5)*50, (Math.random()-0.5)*50, (Math.random()-0.5)*50);
 
             const s = 0.8; group.scale.set(s,s,s);
