@@ -1,11 +1,8 @@
-<!-- -&#45;&#45; START OF FILE cst2_galaxy.html -&#45;&#45;-->
-
 <!--
-  - @Project: Cosmic Memories - Galaxy Edition
-  - @Author: wp/electronicminer (Modified for Galaxy Structure)
+  - @Project: Cosmic Memories - Galaxy Edition (Fixed Focus)
+  - @Author: wp/electronicminer
   - @Date: 2025-12-07
-  - @Description: 3D Structure reimagined as a Spiral Galaxy. No more Trees.
-  - 如需使用或分发，请务必保留此作者声明。
+  - @Description: 3D Galaxy Structure with fixed Photo Viewing logic.
 -->
 <!DOCTYPE html>
 <html lang="zh-CN">
@@ -18,7 +15,6 @@
         body {
             margin: 0;
             overflow: hidden;
-            /* Deep Space Gradient */
             background: radial-gradient(circle at center, #1b0d38 0%, #090514 40%, #000000 100%);
             background-color: #000;
             font-family: 'Montserrat', sans-serif;
@@ -118,7 +114,7 @@
 
         input[type="file"] { display: none; }
 
-        /* Mode Buttons (Bottom) */
+        /* Mode Buttons */
         #mode-bar {
             position: absolute; bottom: 40px; left: 50%;
             transform: translateX(-50%);
@@ -234,7 +230,7 @@
         import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
         import { FilesetResolver, HandLandmarker } from '@mediapipe/tasks-vision';
 
-        // --- 核心配置 (Theme: Cosmic Galaxy) ---
+        // --- 核心配置 ---
         const CONFIG = {
             colors: {
                 bg: 0x000000,
@@ -247,11 +243,12 @@
             particles: {
                 count: 2000,
                 dustCount: 3000,
-                cometCount: 200, // Replaces snow
-                galaxyRadius: 28, // Wider spread
+                cometCount: 200,
+                galaxyRadius: 28,
                 armCount: 3
             },
-            camera: { z: 40, y: 25 }, // Higher camera angle to see the spiral
+            // Camera is high up and back
+            camera: { z: 40, y: 25 },
             preload: {
                 autoScanLocal: false,
                 useCloudImages: true,
@@ -302,11 +299,11 @@
         };
 
         const STATE = {
-            mode: 'GALAXY', // Renamed from TREE
+            mode: 'GALAXY',
             focusIndex: -1,
             focusTarget: null,
             hand: { detected: false, x: 0, y: 0 },
-            rotation: { x: 0, y: 0 }, // Initial angle
+            rotation: { x: 0, y: 0 },
             touch: { active: false, startX: 0, startY: 0, lastX: 0, lastY: 0 }
         };
 
@@ -354,7 +351,6 @@
             animate();
         }
 
-        // --- Raycaster & Interactions ---
         function setupTouchAndClick() {
             const container = document.getElementById('canvas-container');
 
@@ -372,7 +368,6 @@
                 const deltaY = e.clientY - STATE.touch.lastY;
                 STATE.rotation.y += deltaX * 0.005;
                 STATE.rotation.x += deltaY * 0.002;
-                // Allow more freedom in rotation for Galaxy view
                 STATE.rotation.x = Math.max(-1.0, Math.min(1.0, STATE.rotation.x));
                 STATE.touch.lastX = e.clientX;
                 STATE.touch.lastY = e.clientY;
@@ -436,7 +431,6 @@
             scene.fog = new THREE.FogExp2(CONFIG.colors.fog, 0.012);
 
             camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-            // Default look from slightly above
             camera.position.set(0, CONFIG.camera.y, CONFIG.camera.z);
             camera.lookAt(0,0,0);
 
@@ -459,16 +453,12 @@
         function setupLights() {
             const ambient = new THREE.AmbientLight(0x404060, 1.0);
             scene.add(ambient);
-
-            // The Galactic Core
             const coreLight = new THREE.PointLight(0xaaddff, 3, 50);
             coreLight.position.set(0, 0, 0);
             mainGroup.add(coreLight);
-
             const purpleLight = new THREE.SpotLight(0xaa00ff, 1200);
             purpleLight.position.set(40, 20, 40);
             scene.add(purpleLight);
-
             const blueLight = new THREE.SpotLight(0x0044ff, 1200);
             blueLight.position.set(-40, -20, -40);
             scene.add(blueLight);
@@ -476,7 +466,6 @@
 
         function setupPostProcessing() {
             const renderScene = new RenderPass(scene, camera);
-            // Intense bloom for glowing stars
             const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
             bloomPass.threshold = 0.2; bloomPass.strength = 1.2; bloomPass.radius = 0.5;
             composer = new EffectComposer(renderer);
@@ -488,16 +477,13 @@
         function createComets() {
             const geometry = new THREE.BufferGeometry();
             const vertices = []; const velocities = [];
-
             for (let i = 0; i < CONFIG.particles.cometCount; i++) {
-                // Spawn in a sphere
                 vertices.push(THREE.MathUtils.randFloatSpread(100), THREE.MathUtils.randFloatSpread(100), THREE.MathUtils.randFloatSpread(100));
                 velocities.push(Math.random() * 0.2 + 0.1);
             }
             geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
             geometry.setAttribute('userData', new THREE.Float32BufferAttribute(velocities, 1));
 
-            // Use a simple dot texture
             const canvas = document.createElement('canvas');
             canvas.width = 16; canvas.height = 16;
             const ctx = canvas.getContext('2d');
@@ -517,13 +503,9 @@
             if (!cometSystem) return;
             const positions = cometSystem.geometry.attributes.position.array;
             const velocities = cometSystem.geometry.attributes.userData.array;
-
             for (let i = 0; i < CONFIG.particles.cometCount; i++) {
                 const speed = velocities[i];
-                // Move towards center then pass through? Or just drift Z?
-                // Let's make them drift across screen
-                positions[i * 3 + 2] += speed; // Z movement
-
+                positions[i * 3 + 2] += speed;
                 if (positions[i * 3 + 2] > 50) {
                     positions[i * 3 + 2] = -50;
                     positions[i * 3] = THREE.MathUtils.randFloatSpread(100);
@@ -536,7 +518,7 @@
         class Particle {
             constructor(mesh, type, isDust = false) {
                 this.mesh = mesh; this.type = type; this.isDust = isDust;
-                this.posGalaxy = new THREE.Vector3(); // Replaced posTree
+                this.posGalaxy = new THREE.Vector3();
                 this.posScatter = new THREE.Vector3();
                 this.baseScale = mesh.scale.x;
                 this.spinSpeed = new THREE.Vector3(Math.random()*0.5, Math.random()*0.5, Math.random()*0.5);
@@ -544,36 +526,23 @@
             }
 
             calculatePositions() {
-                // 1. SCATTER POSITION (Big Bang sphere)
                 const rScatter = 15 + Math.random()*30;
                 const theta = Math.random() * Math.PI * 2;
                 const phi = Math.acos(2 * Math.random() - 1);
                 this.posScatter.set(rScatter * Math.sin(phi) * Math.cos(theta), rScatter * Math.sin(phi) * Math.sin(theta), rScatter * Math.cos(phi));
 
-                // 2. GALAXY POSITION (Spiral Arms)
-                // Using Logarithmic Spiral formula approximation
-                // arms = 3
                 const arms = 3;
-                // Random distance from center (bias towards center for density)
                 const r = Math.pow(Math.random(), 1.5) * CONFIG.particles.galaxyRadius;
-
-                // Angle based on radius + arm offset
                 const armIndex = Math.floor(Math.random() * arms);
                 const armOffset = (Math.PI * 2 / arms) * armIndex;
-                const spinFactor = 0.5; // How tight the spiral is
+                const spinFactor = 0.5;
                 const angle = armOffset + (r * spinFactor);
-
-                // Add some randomness to angle (spread width of arm)
                 const spread = Math.random() * 0.5;
                 const finalAngle = angle + spread;
-
-                // Vertical spread (thicker at center, thinner at edges like a lens)
                 const diskThickness = 4 * Math.exp(-r / 15);
                 const y = (Math.random() - 0.5) * diskThickness;
-
                 const x = Math.cos(finalAngle) * r;
                 const z = Math.sin(finalAngle) * r;
-
                 this.posGalaxy.set(x, y, z);
             }
 
@@ -582,22 +551,22 @@
 
                 if (mode === 'FOCUS') {
                     if (this.mesh === focusTargetMesh) {
-                        // Bring closer to camera
-                        const desiredWorldPos = new THREE.Vector3(0, 2, 35);
-                        // Convert world pos to local inside the rotating group
+                        // 【FIXED LOGIC】
+                        // The camera is at (0, 25, 40).
+                        // We place the target at (0, 15, 20), which is roughly in front of the camera,
+                        // elevated enough to be seen.
+                        const desiredWorldPos = new THREE.Vector3(0, 15, 20);
                         const invMatrix = new THREE.Matrix4().copy(mainGroup.matrixWorld).invert();
                         target = desiredWorldPos.applyMatrix4(invMatrix);
                     } else {
-                        target = this.posScatter; // Others scatter away
+                        target = this.posScatter;
                     }
                 }
 
-                const lerpSpeed = (mode === 'FOCUS' && this.mesh === focusTargetMesh) ? 4.0 : 1.0;
+                const lerpSpeed = (mode === 'FOCUS' && this.mesh === focusTargetMesh) ? 5.0 : 1.0;
                 this.mesh.position.lerp(target, lerpSpeed * dt);
 
-                // Rotation behavior
                 if (mode === 'GALAXY') {
-                     // Stars face camera mostly, but tumbling is fine for dust
                      if(this.type === 'PHOTO') {
                          this.mesh.lookAt(camera.position);
                      } else {
@@ -608,10 +577,8 @@
 
                 if (mode === 'FOCUS' && this.mesh === focusTargetMesh) this.mesh.lookAt(camera.position);
 
-                // Scaling
                 let s = this.baseScale;
                 if (mode === 'GALAXY') {
-                    // Pulsate stars
                     if (!this.type.includes('PHOTO')) {
                          s = this.baseScale * (0.8 + 0.4 * Math.sin(clock.elapsedTime * 3 + this.mesh.id));
                     }
@@ -619,7 +586,8 @@
 
                 if (mode === 'SCATTER' && this.type === 'PHOTO') s = this.baseScale * 2.5;
                 else if (mode === 'FOCUS') {
-                    if (this.mesh === focusTargetMesh) s = 4.5; else s = 0.1;
+                    // Larger scale for focus because camera is far
+                    if (this.mesh === focusTargetMesh) s = 6.0; else s = 0.1;
                 }
                 this.mesh.scale.lerp(new THREE.Vector3(s,s,s), 4*dt);
             }
@@ -630,33 +598,25 @@
             const count = photos.length;
             if (count === 0) return;
 
-            // Arrange photos in a ring/spiral embedded in the galaxy
             const arms = 3;
             photos.forEach((p, i) => {
-                // Distribute along the arms
                 const armIndex = i % arms;
-                // Position further out for photos
-                const progress = (i / count); // 0 to 1
-                const r = 8 + progress * 15; // Spiral outwards from 8 to 23
-
+                const progress = (i / count);
+                const r = 8 + progress * 15;
                 const armOffset = (Math.PI * 2 / arms) * armIndex;
-                const angle = armOffset + (r * 0.5); // Match the spiral tightness
-
+                const angle = armOffset + (r * 0.5);
                 const x = Math.cos(angle) * r;
                 const z = Math.sin(angle) * r;
-                const y = (Math.random() - 0.5) * 2; // Slight vertical variation
-
+                const y = (Math.random() - 0.5) * 2;
                 p.posGalaxy.set(x, y, z);
             });
         }
 
         function createParticles() {
-            // Geometries
-            const sphereGeo = new THREE.SphereGeometry(0.2, 16, 16); // Small star
-            const bigStarGeo = new THREE.OctahedronGeometry(0.4, 0); // Diamond star
-            const rockGeo = new THREE.DodecahedronGeometry(0.25, 0); // Asteroid
+            const sphereGeo = new THREE.SphereGeometry(0.2, 16, 16);
+            const bigStarGeo = new THREE.OctahedronGeometry(0.4, 0);
+            const rockGeo = new THREE.DodecahedronGeometry(0.25, 0);
 
-            // Materials
             const blueStarMat = new THREE.MeshBasicMaterial({ color: CONFIG.colors.starBlue });
             const purpleStarMat = new THREE.MeshBasicMaterial({ color: CONFIG.colors.starPurple });
             const goldStarMat = new THREE.MeshStandardMaterial({
@@ -686,12 +646,9 @@
                 particleSystem.push(new Particle(mesh, type, false));
             }
 
-            // Central Black Hole / Bright Core
             const coreGeo = new THREE.SphereGeometry(2, 32, 32);
-            const coreMat = new THREE.MeshBasicMaterial({ color: 0xffffff }); // Bright white core
+            const coreMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
             const coreMesh = new THREE.Mesh(coreGeo, coreMat);
-
-            // Add a "Halo"
             const haloGeo = new THREE.RingGeometry(2.2, 2.5, 32);
             const haloMat = new THREE.MeshBasicMaterial({ color: 0xaa44ff, side: THREE.DoubleSide, transparent: true, opacity: 0.8 });
             const haloMesh = new THREE.Mesh(haloGeo, haloMat);
@@ -699,12 +656,10 @@
 
             coreMesh.add(haloMesh);
             mainGroup.add(coreMesh);
-
             mainGroup.add(photoMeshGroup);
         }
 
         function createNebulaDust() {
-            // Floating nebula clouds (transparent planes)
             const geo = new THREE.PlaneGeometry(0.5, 0.5);
             const mat = new THREE.MeshBasicMaterial({ color: 0xaa88ff, side: THREE.DoubleSide, transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending });
             for(let i=0; i<CONFIG.particles.dustCount; i++) {
@@ -716,7 +671,6 @@
         }
 
         function addPhotoToScene(texture) {
-            // Hi-tech / Holographic frame
             const frameGeo = new THREE.BoxGeometry(1.4, 1.4, 0.05);
             const frameMat = new THREE.MeshStandardMaterial({
                 color: 0x88ccff, metalness: 0.9, roughness: 0.1, emissive: 0x002244, emissiveIntensity: 0.5
@@ -734,8 +688,6 @@
             const group = new THREE.Group();
             group.add(frame); group.add(photo);
             frame.scale.set(width/1.2, height/1.2, 1);
-
-            // Initial random scatter
             group.position.set((Math.random()-0.5)*50, (Math.random()-0.5)*50, (Math.random()-0.5)*50);
 
             const s = 0.8; group.scale.set(s,s,s);
@@ -762,21 +714,11 @@
 
         function loadPredefinedImages() {
             const loader = new THREE.TextureLoader();
-
             if (CONFIG.preload.useCloudImages && CONFIG.preload.cloudImageUrls.length > 0) {
                 CONFIG.preload.cloudImageUrls.forEach(url => {
-                    loader.load(
-                        url,
-                        (t) => {
-                            t.colorSpace = THREE.SRGBColorSpace;
-                            addPhotoToScene(t);
-                        },
-                        undefined,
-                        (err) => { console.warn("Failed to load cloud image:", url); }
-                    );
+                    loader.load(url, (t) => { t.colorSpace = THREE.SRGBColorSpace; addPhotoToScene(t); });
                 });
             }
-
             if (CONFIG.preload.autoScanLocal) {
                 for (let i = 1; i <= CONFIG.preload.scanCount; i++) {
                     const pathJpg = `./images/(${i}).jpg`;
@@ -906,7 +848,10 @@
                     // Constant slow rotation of the galaxy
                     STATE.rotation.y -= 0.1 * dt;
                     // Slowly oscillate the tilt
-                    STATE.rotation.x = Math.sin(clock.elapsedTime * 0.2) * 0.2 + 0.3; // Slight tilt
+                    STATE.rotation.x = Math.sin(clock.elapsedTime * 0.2) * 0.2 + 0.3;
+                } else if (STATE.mode === 'FOCUS') {
+                    // 【FIX】 Stop rotation when focusing on a photo
+                    // Do nothing to rotation, or dampen it very slowly
                 } else {
                     STATE.rotation.y += 0.1 * dt;
                 }
