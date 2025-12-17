@@ -505,7 +505,7 @@
         function setupPostProcessing() {
             const renderScene = new RenderPass(scene, camera);
             const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
-            bloomPass.threshold = 0.2; bloomPass.strength = 0; bloomPass.radius = 0.5;
+            bloomPass.threshold = 1.1; bloomPass.strength = 1.2; bloomPass.radius = 0.5;
             composer = new EffectComposer(renderer);
             composer.addPass(renderScene);
             composer.addPass(bloomPass);
@@ -655,14 +655,26 @@
             const bigStarGeo = new THREE.OctahedronGeometry(0.4, 0);
             const rockGeo = new THREE.DodecahedronGeometry(0.25, 0);
 
-            const blueStarMat = new THREE.MeshBasicMaterial({ color: CONFIG.colors.starBlue });
-            const purpleStarMat = new THREE.MeshBasicMaterial({ color: CONFIG.colors.starPurple });
+            const blueStarMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(CONFIG.colors.starBlue).multiplyScalar(10) });
+            const purpleStarMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(CONFIG.colors.starPurple).multiplyScalar(10) });
+            // 金色星星使用 emissive (自发光) 强度设高一点
             const goldStarMat = new THREE.MeshStandardMaterial({
-                color: CONFIG.colors.starGold, emissive: 0xffaa00, emissiveIntensity: 2.0
+                color: CONFIG.colors.starGold,
+                emissive: 0xffaa00,
+                emissiveIntensity: 4.0 // 强度很高
             });
             const rockMat = new THREE.MeshStandardMaterial({
                 color: 0x666666, roughness: 0.8
             });
+
+            // const blueStarMat = new THREE.MeshBasicMaterial({ color: CONFIG.colors.starBlue });
+            // const purpleStarMat = new THREE.MeshBasicMaterial({ color: CONFIG.colors.starPurple });
+            // const goldStarMat = new THREE.MeshStandardMaterial({
+            //     color: CONFIG.colors.starGold, emissive: 0xffaa00, emissiveIntensity: 2.0
+            // });
+            // const rockMat = new THREE.MeshStandardMaterial({
+            //     color: 0x666666, roughness: 0.8
+            // });
 
             for (let i = 0; i < CONFIG.particles.count; i++) {
                 const rand = Math.random();
