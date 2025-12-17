@@ -705,7 +705,7 @@
             }
 
             const coreGeo = new THREE.SphereGeometry(2, 32, 32);
-            const coreMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            const coreMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(0xffffff).multiplyScalar(2.0) });
             const coreMesh = new THREE.Mesh(coreGeo, coreMat);
             const haloGeo = new THREE.RingGeometry(2.2, 2.5, 32);
             const haloMat = new THREE.MeshBasicMaterial({ color: 0xaa44ff, side: THREE.DoubleSide, transparent: true, opacity: 0.8 });

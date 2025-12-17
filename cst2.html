@@ -72,36 +72,73 @@
         @media (min-width: 768px) { h1 { font-size: 56px; } }
 
         /* Controls */
-        .controls-wrapper {
-            position: absolute; top: 100px; right: 20px;        
-            pointer-events: auto;
-            display: flex; flex-direction: column; align-items: flex-end;
-            gap: 10px; z-index: 20;
-            transition: opacity 0.5s ease;
-        }
+        .side-controls {
+    position: absolute;
+    top: 100px;
+    pointer-events: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 20; /* 确保在3D场景上方 */
+    transition: opacity 0.5s ease;
+}
 
-        .btn-group {
-            display: flex; flex-direction: column; gap: 10px; align-items: flex-end;
-        }
+/* 左侧按钮组：明确左定位 */
+#left-controls {
+    left: 20px; /* 固定左侧距离 */
+    align-items: flex-start; /* 按钮左对齐 */
+}
+
+/* 右侧原有按钮组：明确右定位 */
+.controls-wrapper {
+    right: 20px; /* 固定右侧距离 */
+    align-items: flex-end; /* 按钮右对齐 */
+}
+.left-btn {
+    font-size: 14px;  /* 左侧按钮字体更大 */
+}
+
+/* 确保按钮组宽度不溢出 */
+.btn-group {
+    min-width: 140px; /* 与原有按钮宽度一致 */
+    max-width: 200px; /* 限制最大宽度 */
+}
+
+        /* Controls */
+        /*.controls-wrapper {*/
+        /*    position: absolute; top: 100px; right: 20px;*/
+        /*    pointer-events: auto;*/
+        /*    display: flex; flex-direction: column; align-items: flex-end;*/
+        /*    gap: 12px; z-index: 20;*/
+        /*    transition: opacity 0.5s ease;*/
+        /*}*/
+
+        /*.btn-group {*/
+        /*    display: flex; flex-direction: column; gap: 12px; align-items: flex-end;*/
+        /*}*/
 
         .control-btn {
-            background: rgba(20, 20, 20, 0.6); 
-            border: 1px solid rgba(212, 175, 55, 0.4); 
-            color: #d4af37; padding: 10px 20px; 
-            cursor: pointer; text-transform: uppercase; 
-            letter-spacing: 2px; font-size: 10px;
+            background: rgba(20, 10, 40, 0.6);
+            border: 1px solid rgba(147, 112, 219, 0.3);
+            color: #e6e6fa; padding: 12px 24px;
+            cursor: pointer; text-transform: uppercase;
+            letter-spacing: 2px; font-size: 9px;
             transition: all 0.4s;
             display: flex; align-items: center; justify-content: center;
-            backdrop-filter: blur(5px); min-width: 120px;
+            backdrop-filter: blur(8px); min-width: 140px;
+            border-radius: 4px;
+            text-decoration: none;
         }
-        
+
         .control-btn.active {
-            background: rgba(212, 175, 55, 0.8); color: #000;
-            box-shadow: 0 0 15px rgba(212, 175, 55, 0.6);
+            background: rgba(147, 112, 219, 0.6); color: #fff;
+            box-shadow: 0 0 20px rgba(147, 112, 219, 0.4);
+            text-decoration: none;
         }
-        .control-btn:hover { 
-            background: #d4af37; color: #000; 
-            box-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
+        .control-btn:hover {
+            background: #9370db; color: #fff;
+            box-shadow: 0 0 25px rgba(147, 112, 219, 0.6);
+            text-decoration: none;
         }
         
         .hint-text {
@@ -196,7 +233,7 @@
     <div id="ui-layer">
         <h1>Merry Christmas</h1>
         
-        <div class="controls-wrapper">
+        <div class="controls-wrapper side-controls">
             <div class="btn-group">
                 <div class="control-btn" id="cam-btn">📷 Enable Gesture</div>
                 <label class="control-btn">
@@ -210,6 +247,15 @@
             </div>
             <div class="hint-text">Cloud Images Loaded. Add local files if needed.</div>
         </div>
+
+        <div id="left-controls" class="side-controls left-btn">
+        <div class="btn-group">
+            <a href="https://yangchuanzhi20.github.io/cst2" class="control-btn">🎄</a>
+            <a href="https://yangchuanzhi20.github.io/yuzhou" class="control-btn">🌀</a>
+<!--            <a href="page2.html" class="control-btn">页面2</a>-->
+<!--            <a href="page3.html" class="control-btn">页面3</a>-->
+        </div>
+    </div>
     <!--
 //   - @Project: Grand Luxury Tree - Christmas Edition (Touch & Gesture)
 //   - @Author: wp/electronicminer qq:2013248845
