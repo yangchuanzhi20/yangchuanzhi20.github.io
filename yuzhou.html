@@ -95,6 +95,9 @@
     right: 20px; /* 固定右侧距离 */
     align-items: flex-end; /* 按钮右对齐 */
 }
+.left-btn {
+    font-size: 14px;  /* 左侧按钮字体更大 */
+}
 
 /* 确保按钮组宽度不溢出 */
 .btn-group {
@@ -125,15 +128,18 @@
             display: flex; align-items: center; justify-content: center;
             backdrop-filter: blur(8px); min-width: 140px;
             border-radius: 4px;
+            text-decoration: none;
         }
 
         .control-btn.active {
             background: rgba(147, 112, 219, 0.6); color: #fff;
             box-shadow: 0 0 20px rgba(147, 112, 219, 0.4);
+            text-decoration: none;
         }
         .control-btn:hover {
             background: #9370db; color: #fff;
             box-shadow: 0 0 25px rgba(147, 112, 219, 0.6);
+            text-decoration: none;
         }
 
         .hint-text {
@@ -240,7 +246,7 @@
         </div>
 
         <!-- 在现有controls-wrapper的上方或下方添加左侧按钮组 -->
-    <div id="left-controls" class="side-controls">
+    <div id="left-controls" class="side-controls left-btn">
         <div class="btn-group">
             <a href="https://yangchuanzhi20.github.io/cst2" class="control-btn">🎄</a>
             <a href="https://yangchuanzhi20.github.io/yuzhou" class="control-btn">🌀</a>
