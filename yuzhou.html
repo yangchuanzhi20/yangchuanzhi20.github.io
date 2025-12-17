@@ -72,6 +72,12 @@
         }
         @media (min-width: 768px) { h1 { font-size: 64px; } }
 
+        .left-controls {
+        left: 20px;   /* 左侧定位 */
+        right: auto;  /* 覆盖右侧默认值 */
+        align-items: flex-start;  /* 左对齐 */
+    }
+
         /* Controls */
         .controls-wrapper {
             position: absolute; top: 100px; right: 20px;
@@ -209,6 +215,14 @@
             <div class="hint-text">Stardust Loaded.</div>
         </div>
 
+        <!-- 在现有controls-wrapper的上方或下方添加左侧按钮组 -->
+    <div class="controls-wrapper left-controls">
+        <div class="btn-group">
+            <a href="https://yangchuanzhi20.github.io/cst1" class="control-btn">页面1</a>
+            <a href="page2.html" class="control-btn">页面2</a>
+            <a href="page3.html" class="control-btn">页面3</a>
+        </div>
+    </div>
         <!-- 模式切换按钮 -->
         <div id="mode-bar">
             <div class="mode-btn" onclick="setMode('GALAXY')" title="Galaxy Shape">🌀</div>
@@ -467,7 +481,7 @@
         function setupPostProcessing() {
             const renderScene = new RenderPass(scene, camera);
             const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
-            bloomPass.threshold = 0.2; bloomPass.strength = 0.6; bloomPass.radius = 0.5;
+            bloomPass.threshold = 0.2; bloomPass.strength = 0; bloomPass.radius = 0.5;
             composer = new EffectComposer(renderer);
             composer.addPass(renderScene);
             composer.addPass(bloomPass);
